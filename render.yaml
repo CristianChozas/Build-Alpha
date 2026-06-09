@@ -1,0 +1,33 @@
+previews:
+  generation: manual
+
+services:
+  - type: web
+    name: buildalpha-backend
+    runtime: docker
+    region: frankfurt
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+
+  - type: web
+    name: buildalpha-frontend
+    runtime: static
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist/buildalpha-frontend/browser
+    autoDeployTrigger: checksPass
+    routes:
+      - type: rewrite
+        source: "/*"
+        destination: "/index.html"

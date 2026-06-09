@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: buildalpha-postgres
+    environment:
+      POSTGRES_DB: buildalpha
+      POSTGRES_USER: buildalpha
+      POSTGRES_PASSWORD: buildalpha
+    ports:
+      - "5432:5432"
+    volumes:
+      - buildalpha-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buildalpha -d buildalpha"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: buildalpha-backend
+    profiles: ["apps"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/buildalpha
+      SPRING_DATASOURCE_USERNAME: buildalpha
+      SPRING_DATASOURCE_PASSWORD: buildalpha
+    ports:
+      - "8081:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: buildalpha-frontend
+    profiles: ["apps"]
+    ports:
+      - "4200:80"
+
+volumes:
+  buildalpha-postgres-data:
